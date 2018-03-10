@@ -1,38 +1,44 @@
+CREATE CONSTRAINT ON (i:Project) ASSERT i.document_id IS UNIQUE;
+CREATE CONSTRAINT ON (i:Biomaterial) ASSERT i.document_id IS UNIQUE;
+CREATE CONSTRAINT ON (i:File) ASSERT i.document_id IS UNIQUE;
+CREATE CONSTRAINT ON (i:Process) ASSERT i.document_id IS UNIQUE;
+CREATE CONSTRAINT ON (i:Protocol) ASSERT i.document_id IS UNIQUE;
+
 WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/malloryfreeberg-post_analysis_v5_bundle_example/examples/bundles/v5/Q4DemoSS2/biomaterial.json" as url
 CALL apoc.load.json(url) yield value
 UNWIND (value.biomaterials) as materials
 MERGE (n:Biomaterial {document_id : materials.hca_ingest.document_id})
-SET n.content = apoc.convert.toJson(materials)
-RETURN n
+SET n.content = apoc.convert.toJson(materials);
 
 WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/malloryfreeberg-post_analysis_v5_bundle_example/examples/bundles/v5/Q4DemoSS2/files.json" as url
 CALL apoc.load.json(url) yield value
 UNWIND (value.files) as file
 MERGE (n:File {document_id : file.hca_ingest.document_id})
-SET n.content = apoc.convert.toJson(file)
+SET n.content = apoc.convert.toJson(file);
 
 WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/malloryfreeberg-post_analysis_v5_bundle_example/examples/bundles/v5/Q4DemoSS2/process.json" as url
 CALL apoc.load.json(url) yield value
 UNWIND (value.processes) as process
 MERGE (n:Process {document_id : process.hca_ingest.document_id})
-SET n.content = apoc.convert.toJson(process)
+SET n.content = apoc.convert.toJson(process);
 
 WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/malloryfreeberg-post_analysis_v5_bundle_example/examples/bundles/v5/Q4DemoSS2/protocol.json" as url
 CALL apoc.load.json(url) yield value
 UNWIND (value.protocols) as protocol
 MERGE (n:Protocol {document_id : protocol.hca_ingest.document_id})
-SET n.content = apoc.convert.toJson(protocol)
+SET n.content = apoc.convert.toJson(protocol);
 
 WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/malloryfreeberg-post_analysis_v5_bundle_example/examples/bundles/v5/Q4DemoSS2/project.json" as url
 CALL apoc.load.json(url) yield value
 MERGE (n:Project {document_id : value.hca_ingest.document_id})
-SET n.content = apoc.convert.toJson(value)
+SET n.content = apoc.convert.toJson(value);
 
 WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/malloryfreeberg-post_analysis_v5_bundle_example/examples/bundles/v5/Q4DemoSS2/links.json" as url
 CALL apoc.load.json(url) yield value
 UNWIND (value.bundle_links) as links
 MATCH (source {document_id : links.source}), (target {document_id : links.target})
 WITH source, target, links.relationship_type as rel_name, replace(links.relationship_type," ", "_") as rel
-CREATE (source)-[:rel {label: rel_name}]->(target)
+CREATE (source)-[:rel {label: rel_name}]->(target);
 
+call db.schema();
 
