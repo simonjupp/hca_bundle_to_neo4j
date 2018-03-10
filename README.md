@@ -8,3 +8,4 @@ Start a Neo4j docker instance
 
 Go to http://localhost:7474
 
+Run the commands in bundle_loading_cypher.txt
