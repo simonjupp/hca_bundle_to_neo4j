@@ -1,0 +1,5 @@
+pyparsing==2.2.0
+neo4j-driver
+six==1.11.0
+requests
+hca-ingest==0.4

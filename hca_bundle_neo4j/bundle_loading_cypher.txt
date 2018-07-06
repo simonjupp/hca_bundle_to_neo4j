@@ -4,36 +4,36 @@ CREATE CONSTRAINT ON (i:File) ASSERT i.document_id IS UNIQUE;
 CREATE CONSTRAINT ON (i:Process) ASSERT i.document_id IS UNIQUE;
 CREATE CONSTRAINT ON (i:Protocol) ASSERT i.document_id IS UNIQUE;
 
-WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/master/examples/bundles/v5/GlioblastomaSS2/quakeGlioblastoma1_biomaterial_bundle_0.json" as url
+WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/develop/examples/bundles/v5/Q4DemoSS2/Q4_DEMO-project_PRJNA248302_biomaterial_bundle.json" as url
 CALL apoc.load.json(url) yield value
 UNWIND (value.biomaterials) as materials
 MERGE (n:Biomaterial {document_id : materials.hca_ingest.document_id})
 SET n.content = apoc.convert.toJson(materials);
 
-WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/master/examples/bundles/v5/GlioblastomaSS2/quakeGlioblastoma1_file_bundle_0.json" as url
+WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/develop/examples/bundles/v5/Q4DemoSS2/Q4_DEMO-project_PRJNA248302_file_bundle.json" as url
 CALL apoc.load.json(url) yield value
 UNWIND (value.files) as file
 MERGE (n:File {document_id : file.hca_ingest.document_id})
 SET n.content = apoc.convert.toJson(file);
 
-WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/master/examples/bundles/v5/GlioblastomaSS2/quakeGlioblastoma1_process_bundle_0.json" as url
+WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/develop/examples/bundles/v5/Q4DemoSS2/Q4_DEMO-project_PRJNA248302_process_bundle.json" as url
 CALL apoc.load.json(url) yield value
 UNWIND (value.processes) as process
 MERGE (n:Process {document_id : process.hca_ingest.document_id})
 SET n.content = apoc.convert.toJson(process);
 
-WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/master/examples/bundles/v5/GlioblastomaSS2/quakeGlioblastoma1_protocol_bundle_0.json" as url
+WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/develop/examples/bundles/v5/Q4DemoSS2/Q4_DEMO-project_PRJNA248302_protocol_bundle.json" as url
 CALL apoc.load.json(url) yield value
 UNWIND (value.protocols) as protocol
 MERGE (n:Protocol {document_id : protocol.hca_ingest.document_id})
 SET n.content = apoc.convert.toJson(protocol);
 
-WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/master/examples/bundles/v5/GlioblastomaSS2/quakeGlioblastoma1_project_bundle_0.json" as url
+WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/develop/examples/bundles/v5/Q4DemoSS2/Q4_DEMO-project_PRJNA248302_project_bundle.json" as url
 CALL apoc.load.json(url) yield value
 MERGE (n:Project {document_id : value.hca_ingest.document_id})
 SET n.content = apoc.convert.toJson(value);
 
-WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/master/examples/bundles/v5/GlioblastomaSS2/quakeGlioblastoma1_links_bundle_0.json" as url
+WITH "https://raw.githubusercontent.com/HumanCellAtlas/metadata-schema/develop/examples/bundles/v5/Q4DemoSS2/Q4_DEMO-project_PRJNA248302_links_bundle.json" as url
 CALL apoc.load.json(url) yield value
 UNWIND (value.links) as links
 MATCH (source {document_id : links.source_id}), (target {document_id : links.destination_id})
