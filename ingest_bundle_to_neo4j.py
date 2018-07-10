@@ -10,11 +10,9 @@ __author__ = "jupp"
 __license__ = "Apache 2.0"
 __date__ = "06/07/2018"
 
-import sys
 from optparse import OptionParser
 import logging
 import os
-import hca_bundle_neo4j.neo4j_loader
 
 if __name__ == "__main__":
 
