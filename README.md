@@ -12,6 +12,6 @@ Start a Neo4j docker instance
 
 Run the follwoing command. `-e` is the submission envelope, `-p` is the full process id URL in ingest (not uuid), `-D` for doing a dry run (doesn't export to blue) and `-o` is the directly where the bundle json files will get written beofre loading into neo4j. 
 
-`bundle_to_neo.sh -e f804f372-6d3e-46d6-ba00-cec3c75122c7  -p http://api.ingest.staging.data.humancellatlas.org/processes/5b3cccc12e12bc00070e1479 -D True -o output`
+`./bundle_to_neo.sh -e f804f372-6d3e-46d6-ba00-cec3c75122c7  -p http://api.ingest.staging.data.humancellatlas.org/processes/5b3cccc12e12bc00070e1479 -D True -o output`
 
 Go to http://localhost:7474 and run this query `MATCH p=()-->() RETURN p`
