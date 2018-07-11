@@ -5,7 +5,7 @@ Description goes here
 import ingest.exporter.ingestexportservice
 
 from hca_bundle_neo4j.neo4j_loader import Neo4jBundleImporter
-
+import urllib.parse
 __author__ = "jupp"
 __license__ = "Apache 2.0"
 __date__ = "06/07/2018"
@@ -59,27 +59,27 @@ if __name__ == "__main__":
     for filename in os.listdir(dir_name):
 
         if "biomaterial" in filename:
-            biomaterial_file = "file:///import/"+dir_name+"/"+filename
+            biomaterial_file = "file:///import/"+dir_name+"/"+urllib.parse.quote(filename)
             print (biomaterial_file)
 
         if "file" in filename:
-            file_file = "file:///import/"+dir_name+"/"+filename
+            file_file = "file:///import/"+dir_name+"/"+urllib.parse.quote(filename)
             print (file_file)
 
         if "links" in filename:
-            links_file = "file:///import/"+dir_name+"/"+filename
+            links_file = "file:///import/"+dir_name+"/"+urllib.parse.quote(filename)
             print (links_file)
 
         if "process" in filename:
-            process_file = "file:///import/"+dir_name+"/"+filename
+            process_file = "file:///import/"+dir_name+"/"+urllib.parse.quote(filename)
             print (process_file)
 
         if "project" in filename:
-            project_file = "file:///import/"+dir_name+"/"+filename
+            project_file = "file:///import/"+dir_name+"/"+urllib.parse.quote(filename)
             print (project_file)
 
         if "protocol" in filename:
-            protocol_file = "file:///import/"+dir_name+"/"+filename
+            protocol_file = "file:///import/"+dir_name+"/"+urllib.parse.quote(filename)
             print (protocol_file)
 
 

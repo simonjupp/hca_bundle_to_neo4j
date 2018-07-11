@@ -78,6 +78,7 @@ class Neo4jBundleImporter:
     def load_data(self, biomaterial_url, file_url, process_url, protocol_url, project_url, links_url):
         session = self.driver.session()
 
+        print (biomaterial_load % (biomaterial_url))
         session.run(biomaterial_load % (biomaterial_url))
         session.run(file_load % (file_url))
         session.run(process_load % (process_url))
