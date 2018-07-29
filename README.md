@@ -10,7 +10,7 @@ Start a Neo4j docker instance
 
 `docker run --rm -e NEO4J_AUTH=none -e NEO4J_apoc_import_file_enabled=true -p 7474:7474 -v $PWD/plugins:/plugins -v $PWD:/import -p 7687:7687 neo4j:3.3.3`
 
-# Loading a bundles from the datastore
+# Loading a bundle from the datastore
 
 Provide the bundle UUID and the environment (dev, integration or staging)
 
