@@ -13,12 +13,17 @@ __date__ = "06/07/2018"
 from optparse import OptionParser
 import logging
 import os
+import hca_bundle_neo4j.dss_bundle_to_neo4j as dss2neo
 
 if __name__ == "__main__":
 
     logging.basicConfig(format=format)
 
     parser = OptionParser()
+    parser.add_option("-b", "--bundle", dest="bundleUuid",
+                      help="UUID of a bundle in the DSS")
+    parser.add_option("-n", "--env", dest="system",
+                      help="dev, integration, staging or prod", default="dev")
     parser.add_option("-e", "--subsEnvUuid", dest="submissionsEnvelopeUuid",
                       help="Submission envelope UUID for which to generate the bundle")
     parser.add_option("-p", "--processUrl", dest="processUrl",
@@ -35,20 +40,6 @@ if __name__ == "__main__":
 
     (options, args) = parser.parse_args()
 
-    if not options.submissionsEnvelopeUuid:
-        print ("You must supply a submission envelope UUID")
-        exit(2)
-
-    if not options.processUrl:
-        print ("You must supply a processUrl")
-        exit(2)
-
-    dir_name = options.output
-
-    ex = ingest.exporter.ingestexportservice.IngestExporter(options)
-
-    ex.export_bundle(options.submissionsEnvelopeUuid, options.processUrl)
-
     biomaterial_file = None
     file_file = None
     project_file = None
@@ -56,34 +47,51 @@ if __name__ == "__main__":
     protocol_file = None
     links_file = None
 
-    for filename in os.listdir(dir_name):
+    if  options.submissionsEnvelopeUuid and options.processUrl:
 
-        if "biomaterial" in filename:
-            biomaterial_file = "file:///import/"+dir_name+"/"+urllib.parse.quote(filename)
-            print (biomaterial_file)
+        dir_name = options.output
 
-        if "file" in filename:
-            file_file = "file:///import/"+dir_name+"/"+urllib.parse.quote(filename)
-            print (file_file)
+        for filename in os.listdir(dir_name):
 
-        if "links" in filename:
-            links_file = "file:///import/"+dir_name+"/"+urllib.parse.quote(filename)
-            print (links_file)
+            if "biomaterial" in filename:
+                biomaterial_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                print(biomaterial_file)
 
-        if "process" in filename:
-            process_file = "file:///import/"+dir_name+"/"+urllib.parse.quote(filename)
-            print (process_file)
+            if "file" in filename:
+                file_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                print(file_file)
 
-        if "project" in filename:
-            project_file = "file:///import/"+dir_name+"/"+urllib.parse.quote(filename)
-            print (project_file)
+            if "links" in filename:
+                links_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                print(links_file)
 
-        if "protocol" in filename:
-            protocol_file = "file:///import/"+dir_name+"/"+urllib.parse.quote(filename)
-            print (protocol_file)
+            if "process" in filename:
+                process_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                print(process_file)
+
+            if "project" in filename:
+                project_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                print(project_file)
+
+            if "protocol" in filename:
+                protocol_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                print(protocol_file)
+
+            ex = ingest.exporter.ingestexportservice.IngestExporter(options)
+
+            ex.export_bundle(options.submissionsEnvelopeUuid, options.processUrl)
+            neo_loader = Neo4jBundleImporter()
+
+            neo_loader.load_data(biomaterial_file, file_file, process_file, protocol_file, project_file, links_file)
+
+    elif options.bundleUuid:
+        dss2neo.main(options.bundleUuid, options.system)
+    else:
+        print("You must supply a submission envelope UUID and process URL or a bundle URL")
+        exit(2)
 
 
 
-    neo_loader = Neo4jBundleImporter()
 
-    neo_loader.load_data(biomaterial_file, file_file, process_file, protocol_file, project_file, links_file)
+
+
