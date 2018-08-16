@@ -14,6 +14,7 @@ from optparse import OptionParser
 import logging
 import os
 import hca_bundle_neo4j.dss_bundle_to_neo4j as dss2neo
+import json
 
 if __name__ == "__main__":
 
@@ -50,39 +51,52 @@ if __name__ == "__main__":
     if  options.submissionsEnvelopeUuid and options.processUrl:
 
         dir_name = options.output
+        ex = ingest.exporter.ingestexportservice.IngestExporter(options)
 
+        ex.export_bundle(options.submissionsEnvelopeUuid, options.processUrl)
+
+        biomaterials = []
+        files = []
+        links_file = None
+        processes = []
+        protocols = []
+        project_file = None
         for filename in os.listdir(dir_name):
+            file = dir_name+"/"+filename
+            with open(file) as f:
+                content = json.load(f)
 
-            if "biomaterial" in filename:
+            if "biomaterial" in content["schema_type"]:
                 biomaterial_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                biomaterials.append(biomaterial_file)
                 print(biomaterial_file)
 
-            if "file" in filename:
+            if "file" in content["schema_type"]:
                 file_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                files.append(file_file)
                 print(file_file)
 
-            if "links" in filename:
+            if "link_bundle" in content["schema_type"]:
                 links_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
                 print(links_file)
 
-            if "process" in filename:
+            if "process" in content["schema_type"]:
                 process_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                processes.append(process_file)
                 print(process_file)
 
-            if "project" in filename:
+            if "project" in content["schema_type"]:
                 project_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
                 print(project_file)
 
-            if "protocol" in filename:
+            if "protocol" in content["schema_type"]:
                 protocol_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                protocols.append(protocol_file)
                 print(protocol_file)
 
-            ex = ingest.exporter.ingestexportservice.IngestExporter(options)
+        neo_loader = Neo4jBundleImporter()
 
-            ex.export_bundle(options.submissionsEnvelopeUuid, options.processUrl)
-            neo_loader = Neo4jBundleImporter()
-
-            neo_loader.load_data(biomaterial_file, file_file, process_file, protocol_file, project_file, links_file)
+        neo_loader.load_data(biomaterials = biomaterials, files = files, processes=processes, protocols =protocols, project_url = project_file, links_url = links_file)
 
     elif options.bundleUuid:
         dss2neo.main(options.bundleUuid, options.system)

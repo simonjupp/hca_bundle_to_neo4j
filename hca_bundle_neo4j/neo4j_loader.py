@@ -12,40 +12,36 @@ from neo4j.v1 import GraphDatabase, basic_auth
 biomaterial_load = """
     WITH \"%s\" as url
     CALL apoc.load.json(url) yield value
-    UNWIND (value.biomaterials) as materials
-    MERGE (n:biomaterial {document_id : materials.hca_ingest.document_id})
-    SET n.content = apoc.convert.toJson(materials);
+    MERGE (n:biomaterial {document_id : value.provenance.document_id})
+    SET n.content = apoc.convert.toJson(value);
 """
 
 file_load = """
 WITH \"%s\" as url
 CALL apoc.load.json(url) yield value
-UNWIND (value.files) as file
-MERGE (n:file {document_id : file.hca_ingest.document_id})
-SET n.content = apoc.convert.toJson(file);
+MERGE (n:file {document_id : value.provenance.document_id})
+SET n.content = apoc.convert.toJson(value);
 """
 
 process_load = """
 WITH \"%s\" as url
 CALL apoc.load.json(url) yield value
-UNWIND (value.processes) as process
-MERGE (n:process {document_id : process.hca_ingest.document_id})
-SET n.content = apoc.convert.toJson(process);
+MERGE (n:process {document_id : value.provenance.document_id})
+SET n.content = apoc.convert.toJson(value);
 
 """
 
 protocol_load = """
 WITH \"%s\" as url
 CALL apoc.load.json(url) yield value
-UNWIND (value.protocols) as protocol
-MERGE (n:protocol {document_id : protocol.hca_ingest.document_id})
-SET n.content = apoc.convert.toJson(protocol);
+MERGE (n:protocol {document_id : value.provenance.document_id})
+SET n.content = apoc.convert.toJson(value);
 """
 
 project_load = """
 WITH \"%s\" as url
 CALL apoc.load.json(url) yield value
-MERGE (n:project {document_id : value.hca_ingest.document_id})
+MERGE (n:project {document_id : value.provenance.document_id})
 SET n.content = apoc.convert.toJson(value);
 
 """
@@ -94,16 +90,32 @@ class Neo4jBundleImporter:
         session.run(links_load % (url))
         session.close()
 
-    def load_data(self, biomaterial_url, file_url, process_url, protocol_url, project_url, links_url):
+    def load_data(self, biomaterials=None, files=None, processes=None, protocols=None, project_url=None, links_url=None):
         session = self.driver.session()
 
-        print (biomaterial_load % (biomaterial_url))
-        session.run(biomaterial_load % (biomaterial_url))
-        session.run(file_load % (file_url))
-        session.run(process_load % (process_url))
-        session.run(protocol_load % (protocol_url))
-        session.run(project_load % (project_url))
-        session.run(links_load % (links_url))
+        for biomaterial_url in biomaterials:
+            print (biomaterial_load % (biomaterial_url))
+            session.run(biomaterial_load % (biomaterial_url))
+
+        for file_url in files:
+            print(file_load % (file_url))
+            session.run(file_load % (file_url))
+
+        for process_url in processes:
+            print(process_load % (process_url))
+            session.run(process_load % (process_url))
+
+        for protocol_url in protocols:
+            print(protocol_load % (protocol_url))
+            session.run(protocol_load % (protocol_url))
+
+        if project_url:
+            print(project_load % (project_url))
+            session.run(project_load % (project_url))
+
+        if links_url:
+            print(links_load % (links_url))
+            session.run(links_load % (links_url))
 
         session.close()
 

@@ -18,9 +18,12 @@ Provide the bundle UUID and the environment (dev, integration or staging)
 
 # Creating a bundle from ingest
 
-Run the follwoing command. `-e` is the submission envelope, `-p` is the full process id URL in ingest (not uuid), `-D` for doing a dry run (doesn't export to blue) and `-o` is the directly where the bundle json files will get written beofre loading into neo4j. 
+You'll need access to the latest hca-ingest libraries. If you've run this before do `pip uninstall hca-ingest` to remove the old ingest client. Then checkout
+the ingest library from https://github.com/HumanCellAtlas/ingest-client. To install the latest ingest client do `pip install -e <path to ingest-client>`
 
-`./bundle_to_neo.sh -e f804f372-6d3e-46d6-ba00-cec3c75122c7  -p http://api.ingest.staging.data.humancellatlas.org/processes/5b3cccc12e12bc00070e1479 -D True -o output`
+Run the following command. `-e` is the submission envelope uuid, `-p` is the assay process uuid (this must be the final sequencing process uuid), `-D` for doing a dry run (doesn't export to blue) and `-o` is the directly where the bundle json files will get written beofre loading into neo4j.
+
+`./bundle_to_neo.sh -e 86243a5a-b869-4da3-b97f-759ba26b0e2c -p afd5ad73-353b-4d04-b045-15736f7cf53c -D True -o output`
 
 # Query neo4j
 
