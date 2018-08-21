@@ -1,8 +1,10 @@
 # Human Cell Atlas bundle importer for Neo4j
 
-Cypher examples for loading and viewing a bundle as a graph in Neo4j
+Scripts for loading a bundle from ingest or the HCA datastore into Neo4j. 
 
-Install the packages
+![Bundle graph in neo4j](bundle_neo4j.jpg?raw=true)
+
+# Install the packages
 
 `pip install -r requirements.txt`
 
