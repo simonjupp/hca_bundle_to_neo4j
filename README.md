@@ -2,7 +2,7 @@
 
 Scripts for loading a bundle from ingest or the HCA datastore into Neo4j. 
 
-![Bundle graph in neo4j](bundle_neo4j.jpg?raw=true)
+![Bundle graph in neo4j](bundle_neo4j.jpeg?raw=true)
 
 # Install the packages
 
