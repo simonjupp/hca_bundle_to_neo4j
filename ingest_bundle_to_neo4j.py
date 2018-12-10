@@ -48,6 +48,9 @@ if __name__ == "__main__":
     protocol_file = None
     links_file = None
 
+    if options.submissionsEnvelopeUuid and not options.processUrl:
+        
+
     if  options.submissionsEnvelopeUuid and options.processUrl:
 
         dir_name = options.output
