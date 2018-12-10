@@ -4,6 +4,7 @@ Description goes here
 """
 import ingest.exporter.ingestexportservice
 import ingest.api.ingestapi
+import requests
 
 from hca_bundle_neo4j.neo4j_loader import Neo4jBundleImporter
 import urllib.parse
@@ -55,68 +56,90 @@ if __name__ == "__main__":
         ingest_url = INGEST_API.replace('{env}', options.system)
         api = ingest.api.ingestapi.IngestApi(ingest_url)
 
-        files = api.getFiles(options.submissionsEnvelopeUuid)['_embedded']
+        done = False
 
+        url = options.submissionsEnvelopeUuid
         process_ids = []
+        files = api.getFiles(url)
 
-        for file in files['files']:
-            if 'sequence_file' in file['content']['describedBy']:
-                derivedFrom = file['_links']['derivedByProcesses']['href']
-                assay = api.get_process(derivedFrom)['_embedded']
-                assay_id = assay['processes'][0]['uuid']['uuid']
-                process_ids.append(assay_id)
+        while not done:
+
+            for file in files['_embedded']['files']:
+                if 'sequence_file' in file['content']['describedBy']:
+                    derivedFrom = file['_links']['derivedByProcesses']['href']
+
+                    r = requests.get(derivedFrom, "{'Content-type': 'application/json'}")
+                    r.raise_for_status()
+
+                    assay = r.json()['_embedded']
+                    assay_id = assay['processes'][0]['uuid']['uuid']
+                    process_ids.append(assay_id)
+
+            if "_links" in files and "next" in files["_links"]:
+                moreFiles = files["_links"]["next"]["href"]
+                f = requests.get(moreFiles, "{'Content-type': 'application/json'}")
+                f.raise_for_status()
+                files = f.json()
+            else:
+                done = True
 
 
 
-    if  options.submissionsEnvelopeUuid and options.processUrl:
 
-        dir_name = options.output
+    if  options.submissionsEnvelopeUuid and (options.processUrl or len(process_ids) > 0):
+        if options.processUrl and len(process_ids) == 0:
+            process_ids.append(options.processUrl)
+
+        output_dir = options.output
         ex = ingest.exporter.ingestexportservice.IngestExporter(options)
-
-        ex.export_bundle(options.submissionsEnvelopeUuid, options.processUrl)
-
-        biomaterials = []
-        files = []
-        links_file = None
-        processes = []
-        protocols = []
-        project_file = None
-        for filename in os.listdir(dir_name):
-            file = dir_name+"/"+filename
-            with open(file) as f:
-                content = json.load(f)
-
-            if "biomaterial" in content["schema_type"]:
-                biomaterial_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
-                biomaterials.append(biomaterial_file)
-                print(biomaterial_file)
-
-            if "file" in content["schema_type"]:
-                file_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
-                files.append(file_file)
-                print(file_file)
-
-            if "link_bundle" in content["schema_type"]:
-                links_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
-                print(links_file)
-
-            if "process" in content["schema_type"]:
-                process_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
-                processes.append(process_file)
-                print(process_file)
-
-            if "project" in content["schema_type"]:
-                project_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
-                print(project_file)
-
-            if "protocol" in content["schema_type"]:
-                protocol_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
-                protocols.append(protocol_file)
-                print(protocol_file)
-
         neo_loader = Neo4jBundleImporter()
 
-        neo_loader.load_data(biomaterials = biomaterials, files = files, processes=processes, protocols =protocols, project_url = project_file, links_url = links_file)
+        for process_id in process_ids:
+            print(process_id)
+
+            dir_name = output_dir + "/" + process_id
+            ex.export_bundle(options.submissionsEnvelopeUuid, options.processUrl)
+
+            biomaterials = []
+            files = []
+            links_file = None
+            processes = []
+            protocols = []
+            project_file = None
+            for filename in os.listdir(dir_name):
+                file = dir_name+"/"+filename
+                with open(file) as f:
+                    content = json.load(f)
+
+                if "biomaterial" in content["schema_type"]:
+                    biomaterial_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                    biomaterials.append(biomaterial_file)
+                    print(biomaterial_file)
+
+                if "file" in content["schema_type"]:
+                    file_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                    files.append(file_file)
+                    print(file_file)
+
+                if "link_bundle" in content["schema_type"]:
+                    links_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                    print(links_file)
+
+                if "process" in content["schema_type"]:
+                    process_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                    processes.append(process_file)
+                    print(process_file)
+
+                if "project" in content["schema_type"]:
+                    project_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                    print(project_file)
+
+                if "protocol" in content["schema_type"]:
+                    protocol_file = "file:///import/" + dir_name + "/" + urllib.parse.quote(filename)
+                    protocols.append(protocol_file)
+                    print(protocol_file)
+
+                neo_loader.load_data(biomaterials = biomaterials, files = files, processes=processes, protocols =protocols, project_url = project_file, links_url = links_file)
 
     elif options.bundleUuid:
         dss2neo.main(options.bundleUuid, options.system)
