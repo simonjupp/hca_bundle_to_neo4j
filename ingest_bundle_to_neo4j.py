@@ -3,6 +3,7 @@
 Description goes here
 """
 import ingest.exporter.ingestexportservice
+import ingest.api.ingestapi
 
 from hca_bundle_neo4j.neo4j_loader import Neo4jBundleImporter
 import urllib.parse
@@ -15,6 +16,8 @@ import logging
 import os
 import hca_bundle_neo4j.dss_bundle_to_neo4j as dss2neo
 import json
+
+INGEST_API = 'http://api.ingest.{env}.data.humancellatlas.org'
 
 if __name__ == "__main__":
 
@@ -49,7 +52,21 @@ if __name__ == "__main__":
     links_file = None
 
     if options.submissionsEnvelopeUuid and not options.processUrl:
-        
+        ingest_url = INGEST_API.replace('{env}', options.system)
+        api = ingest.api.ingestapi.IngestApi(ingest_url)
+
+        files = api.getFiles(options.submissionsEnvelopeUuid)['_embedded']
+
+        process_ids = []
+
+        for file in files['files']:
+            if 'sequence_file' in file['content']['describedBy']:
+                derivedFrom = file['_links']['derivedByProcesses']['href']
+                assay = api.get_process(derivedFrom)['_embedded']
+                assay_id = assay['processes'][0]['uuid']['uuid']
+                process_ids.append(assay_id)
+
+
 
     if  options.submissionsEnvelopeUuid and options.processUrl:
 
