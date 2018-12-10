@@ -73,15 +73,17 @@ if __name__ == "__main__":
 
                     assay = r.json()['_embedded']
                     assay_id = assay['processes'][0]['uuid']['uuid']
-                    process_ids.append(assay_id)
 
-            if "_links" in files and "next" in files["_links"]:
-                moreFiles = files["_links"]["next"]["href"]
-                f = requests.get(moreFiles, "{'Content-type': 'application/json'}")
-                f.raise_for_status()
-                files = f.json()
-            else:
-                done = True
+                    if assay_id not in process_ids:
+                        process_ids.append(assay_id)
+
+            # if "_links" in files and "next" in files["_links"]:
+            #     moreFiles = files["_links"]["next"]["href"]
+            #     f = requests.get(moreFiles, "{'Content-type': 'application/json'}")
+            #     f.raise_for_status()
+            #     files = f.json()
+            # else:
+            done = True
 
 
 
@@ -92,13 +94,20 @@ if __name__ == "__main__":
 
         output_dir = options.output
         ex = ingest.exporter.ingestexportservice.IngestExporter(options)
-        neo_loader = Neo4jBundleImporter()
+        # neo_loader = Neo4jBundleImporter()
 
         for process_id in process_ids:
             print(process_id)
 
             dir_name = output_dir + "/" + process_id
-            ex.export_bundle(options.submissionsEnvelopeUuid, options.processUrl)
+
+            process_search_url = ingest_url + "/processes/search/findByUuid?uuid=" + process_id
+            r = requests.get(process_search_url, "{'Content-type': 'application/json'}")
+            r.raise_for_status()
+
+            process_url = r.json()['_links']['self']['href']
+
+            ex.export_bundle(options.submissionsEnvelopeUuid, process_url)
 
             biomaterials = []
             files = []
@@ -139,7 +148,7 @@ if __name__ == "__main__":
                     protocols.append(protocol_file)
                     print(protocol_file)
 
-                neo_loader.load_data(biomaterials = biomaterials, files = files, processes=processes, protocols =protocols, project_url = project_file, links_url = links_file)
+                # neo_loader.load_data(biomaterials = biomaterials, files = files, processes=processes, protocols =protocols, project_url = project_file, links_url = links_file)
 
     elif options.bundleUuid:
         dss2neo.main(options.bundleUuid, options.system)
