@@ -59,6 +59,9 @@ if __name__ == "__main__":
         done = False
 
         url = options.submissionsEnvelopeUuid
+
+        subsEnvUuid = api.getSubmissionEnvelope(ingest_url + "/submissionEnvelopes/" + url)['uuid']['uuid']
+
         process_ids = []
         files = api.getFiles(url)
 
@@ -77,13 +80,13 @@ if __name__ == "__main__":
                     if assay_id not in process_ids:
                         process_ids.append(assay_id)
 
-            # if "_links" in files and "next" in files["_links"]:
-            #     moreFiles = files["_links"]["next"]["href"]
-            #     f = requests.get(moreFiles, "{'Content-type': 'application/json'}")
-            #     f.raise_for_status()
-            #     files = f.json()
-            # else:
-            done = True
+            if "_links" in files and "next" in files["_links"]:
+                moreFiles = files["_links"]["next"]["href"]
+                f = requests.get(moreFiles, "{'Content-type': 'application/json'}")
+                f.raise_for_status()
+                files = f.json()
+            else:
+                done = True
 
 
 
@@ -93,6 +96,7 @@ if __name__ == "__main__":
             process_ids.append(options.processUrl)
 
         output_dir = options.output
+        options.ingest = ingest_url
         ex = ingest.exporter.ingestexportservice.IngestExporter(options)
         # neo_loader = Neo4jBundleImporter()
 
@@ -101,13 +105,13 @@ if __name__ == "__main__":
 
             dir_name = output_dir + "/" + process_id
 
-            process_search_url = ingest_url + "/processes/search/findByUuid?uuid=" + process_id
-            r = requests.get(process_search_url, "{'Content-type': 'application/json'}")
-            r.raise_for_status()
+            # process_search_url = ingest_url + "/processes/search/findByUuid?uuid=" + process_id
+            # r = requests.get(process_search_url, "{'Content-type': 'application/json'}")
+            # r.raise_for_status()
 
-            process_url = r.json()['_links']['self']['href']
+            # process_url = r.json()['_links']['self']['href']
 
-            ex.export_bundle(options.submissionsEnvelopeUuid, process_url)
+            ex.export_bundle(subsEnvUuid, process_id)
 
             biomaterials = []
             files = []
