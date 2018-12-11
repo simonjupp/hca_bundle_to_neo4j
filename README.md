@@ -27,6 +27,15 @@ Run the following command. `-e` is the submission envelope uuid, `-p` is the ass
 
 `./bundle_to_neo.sh -e 86243a5a-b869-4da3-b97f-759ba26b0e2c -p afd5ad73-353b-4d04-b045-15736f7cf53c -D True -o output`
 
+
+# Creating extended graph links from ingest
+
+The version of the script creates the modified graph linking json identified at the Cambridge Biohackathon. The script doesn't download entire bundles, it just creates the linking. It does so for all the data in a given submission.
+
+Run the following command. `-e` is the submission envelope (Mongo) ID, `-n` specifies the environment (staging, integration or dev) in which to run the script and `-o` is the directly where the linked graph json files will get written.
+
+`./bundle_to_neo.sh -e 5ba0bd5eb32e850007eb6dd6 -n staging -o output`
+
 # Query neo4j
 
 Go to http://localhost:7474 and run this query `MATCH p=()-->() RETURN p`

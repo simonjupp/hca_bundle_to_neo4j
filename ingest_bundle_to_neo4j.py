@@ -47,13 +47,13 @@ def get_all_process_ids(submission_envelope_id):
                 if assay_id not in process_ids:
                     process_ids.append(assay_id)
 
-        # if "_links" in files and "next" in files["_links"]:
-        #     moreFiles = files["_links"]["next"]["href"]
-        #     f = requests.get(moreFiles, "{'Content-type': 'application/json'}")
-        #     f.raise_for_status()
-        #     files = f.json()
-        # else:
-        done = True
+            if "_links" in files and "next" in files["_links"]:
+                moreFiles = files["_links"]["next"]["href"]
+                f = requests.get(moreFiles, "{'Content-type': 'application/json'}")
+                f.raise_for_status()
+                files = f.json()
+            else:
+                done = True
     return process_ids
 
 
