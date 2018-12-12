@@ -3,6 +3,7 @@ import json
 from ingest_bundle_to_neo4j import AdvancedLinksBuilder
 from argparse import ArgumentParser
 import graph_diff as gf
+import os
 
 if __name__ == "__main__":
 
@@ -15,6 +16,10 @@ if __name__ == "__main__":
                         default=True)
     parser.add_argument("-o", "--output", dest="output",
                         help="output directory where to dump json files submitted to ingest", metavar="FILE")
+    parser.add_argument("-p", "--plot", action="store_true",
+                        help="Flag to draw the graphs")
+    parser.add_argument("-l", "--layout", dest="layout",
+                        help="Graph layout option", default="2")
 
     options = parser.parse_args()
 
@@ -35,7 +40,7 @@ if __name__ == "__main__":
 
 
         l = os.listdir(options.output)
-        infiles = [options.output + x for x in l]
+        infiles = [options.output + "/" + x for x in l]
         print('Processing {} bundles...'.format(len(infiles)))
 
         feature_list = []
@@ -60,7 +65,7 @@ if __name__ == "__main__":
             graphs.append(G)
 
         # load_graph_neo4j(data)
-        # generate_report(feature_list, assumption_list)
+        gf.generate_report(feature_list, assumption_list)
         gf.graph_compare(graphs)
 
     else:

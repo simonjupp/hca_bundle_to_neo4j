@@ -62,14 +62,14 @@ class AdvancedLinksBuilder:
                     if assay_id not in process_ids:
                         process_ids.append(assay_id)
 
-            if "_links" in files and "next" in files["_links"]:
-                moreFiles = files["_links"]["next"]["href"]
-                print(moreFiles)
-                f = requests.get(moreFiles)
-                f.raise_for_status()
-                files = f.json()
-            else:
-                done = True
+            # if "_links" in files and "next" in files["_links"]:
+            #     moreFiles = files["_links"]["next"]["href"]
+            #     print(moreFiles)
+            #     f = requests.get(moreFiles)
+            #     f.raise_for_status()
+            #     files = f.json()
+            # else:
+            done = True
         return process_ids
 
 
