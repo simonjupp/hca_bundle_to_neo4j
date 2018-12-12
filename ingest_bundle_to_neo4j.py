@@ -12,127 +12,153 @@ __author__ = "jupp"
 __license__ = "Apache 2.0"
 __date__ = "06/07/2018"
 
-from optparse import OptionParser
+from argparse import ArgumentParser
 import logging
 import os
 import hca_bundle_neo4j.dss_bundle_to_neo4j as dss2neo
 import json
 
 INGEST_API = 'http://api.ingest.{env}.data.humancellatlas.org'
+INGEST_API_PROD = 'http://api.ingest.data.humancellatlas.org'
 
 
-def get_all_process_ids(submission_envelope_id):
+class AdvancedLinksBuilder:
 
-    done = False
+    def __init__(self, options):
+        if options.system != 'prod':
+            ingest_url = INGEST_API.replace('{env}', options.system)
+        else:
+            ingest_url = INGEST_API_PROD
+        self.api = ingest.api.ingestapi.IngestApi(ingest_url)
 
-    url = options.submissionsEnvelopeUuid
+        options.ingest = ingest_url
+        options.staging = None
+        options.dss = None
+        self.ex = ingest.exporter.ingestexportservice.IngestExporter(options)
 
-    subsEnvUuid = api.getSubmissionEnvelope(ingest_url + "/submissionEnvelopes/" + url)['uuid']['uuid']
+        self.output_dir = options.output
 
-    process_ids = []
-    files = api.getFiles(url)
+    def get_all_process_ids(self, submission_envelope_id):
 
-    while not done:
+        done = False
 
-        for file in files['_embedded']['files']:
-            if 'sequence_file' in file['content']['describedBy']:
-                derivedFrom = file['_links']['derivedByProcesses']['href']
+        url = submission_envelope_id
 
-                r = requests.get(derivedFrom, "{'Content-type': 'application/json'}")
-                r.raise_for_status()
+        process_ids = []
+        files = self.api.getFiles(url)
 
-                assay = r.json()['_embedded']
-                assay_id = assay['processes'][0]['uuid']['uuid']
+        while not done:
 
-                if assay_id not in process_ids:
-                    process_ids.append(assay_id)
+            for file in files['_embedded']['files']:
+                if 'sequence_file' in file['content']['describedBy']:
+                    derivedFrom = file['_links']['derivedByProcesses']['href']
+
+                    r = requests.get(derivedFrom, "{'Content-type': 'application/json'}")
+                    r.raise_for_status()
+
+                    assay = r.json()['_embedded']
+                    assay_id = assay['processes'][0]['uuid']['uuid']
+
+                    if assay_id not in process_ids:
+                        process_ids.append(assay_id)
 
             if "_links" in files and "next" in files["_links"]:
                 moreFiles = files["_links"]["next"]["href"]
-                f = requests.get(moreFiles, "{'Content-type': 'application/json'}")
+                print(moreFiles)
+                f = requests.get(moreFiles)
                 f.raise_for_status()
                 files = f.json()
             else:
                 done = True
-    return process_ids
+        return process_ids
 
 
-def gather_process_data(process_uuid):
-    process = api.getEntityByUuid('processes', process_uuid)
-    process_info = ex.get_all_process_info(process)
-    metadata_by_type = ex.get_metadata_by_type(process_info)
-    links = ex.bundle_links(process_info.links)
+    def gather_process_data(self, process_uuid):
+        process = self.api.getEntityByUuid('processes', process_uuid)
+        process_info = self.ex.get_all_process_info(process)
+        metadata_by_type = self.ex.get_metadata_by_type(process_info)
+        links = self.ex.bundle_links(process_info.links)
 
-    for link in links['links']:
-        input_options = metadata_by_type[link['input_type']]
+        for link in links['links']:
+            input_options = metadata_by_type[link['input_type']]
 
-        new_inputs = dict()
-        for input in link['inputs']:
-            current = input_options[input]
-            type_id = get_type_and_id(current, link['input_type'])
+            new_inputs = dict()
+            for input in link['inputs']:
+                current = input_options[input]
+                type_id = self.get_type_and_id(current, link['input_type'])
 
-            if 'input_specific_type' not in link:
-                link['input_specific_type'] = type_id['type']
-            elif 'input_specific_type' in link and link['input_specific_type'] !=  type_id['type']:
-                print("Inputs of more than one type for process " + process_uuid)
+                if 'input_specific_type' not in link:
+                    link['input_specific_type'] = type_id['type']
+                elif 'input_specific_type' in link and link['input_specific_type'] !=  type_id['type']:
+                    print("Inputs of more than one type for process " + process_uuid)
 
-            new_inputs[input] = type_id['id']
-        link['inputs'] = new_inputs
+                new_inputs[input] = type_id['id']
+            link['inputs'] = new_inputs
 
-        output_options = metadata_by_type[link['output_type']]
+            output_options = metadata_by_type[link['output_type']]
 
-        new_outputs = dict()
-        for output in link['outputs']:
-            current = output_options[output]
-            type_id = get_type_and_id(current, link['output_type'])
+            new_outputs = dict()
+            for output in link['outputs']:
+                current = output_options[output]
+                type_id = self.get_type_and_id(current, link['output_type'])
 
-            if 'output_specific_type' not in link:
-                link['output_specific_type'] = type_id['type']
-            elif 'output_specific_type' in link and link['output_specific_type'] !=  type_id['type']:
-                print("Outputs of more than one type for process " + process_uuid)
+                if 'output_specific_type' not in link:
+                    link['output_specific_type'] = type_id['type']
+                elif 'output_specific_type' in link and link['output_specific_type'] !=  type_id['type']:
+                    print("Outputs of more than one type for process " + process_uuid)
 
-            new_outputs[output] = type_id['id']
-        link['outputs'] = new_outputs
+                new_outputs[output] = type_id['id']
+            link['outputs'] = new_outputs
 
-    return links
+        return links
 
 
-def get_type_and_id(current, type):
-    current_type = current['content']['describedBy'].split('/')[-1]
+    def get_type_and_id(self, current, type):
+        current_type = current['content']['describedBy'].split('/')[-1]
 
-    if type == 'biomaterial':
-        current_id = current['content']['biomaterial_core']['biomaterial_id']
+        if type == 'biomaterial':
+            current_id = current['content']['biomaterial_core']['biomaterial_id']
 
-    elif type == 'file':
-        current_id = current['content']['file_core']['file_name']
+        elif type == 'file':
+            current_id = current['content']['file_core']['file_name']
 
-    return {'type': current_type, 'id': current_id}
+        return {'type': current_type, 'id': current_id}
 
+
+    def _save_file(self, process_uuid, linked_graph):
+        directory = os.path.abspath(self.output_dir)
+
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        tmp_file = open(directory + "/" + process_uuid + "_linksGraph.json", "w")
+        tmp_file.write(json.dumps(linked_graph['links'], indent=4))
+        tmp_file.close()
 
 if __name__ == "__main__":
 
     logging.basicConfig(format=format)
 
-    parser = OptionParser()
-    parser.add_option("-b", "--bundle", dest="bundleUuid",
+    parser = ArgumentParser()
+    parser.add_argument("-b", "--bundle", dest="bundleUuid",
                       help="UUID of a bundle in the DSS")
-    parser.add_option("-n", "--env", dest="system",
+    parser.add_argument("-n", "--env", dest="system",
                       help="dev, integration, staging or prod", default="dev")
-    parser.add_option("-e", "--subsEnvUuid", dest="submissionsEnvelopeUuid",
+    parser.add_argument("-e", "--subsEnvUuid", dest="submissionsEnvelopeUuid",
                       help="Submission envelope UUID for which to generate the bundle")
-    parser.add_option("-p", "--processUrl", dest="processUrl",
+    parser.add_argument("-p", "--processUrl", dest="processUrl",
                       help="Process Url")
-    parser.add_option("-D", "--dry", help="do a dry run without submitting to ingest", action="store_true",
+    parser.add_argument("-D", "--dry", help="do a dry run without submitting to ingest", action="store_true",
                       default=True)
-    parser.add_option("-o", "--output", dest="output",
+    parser.add_argument("-o", "--output", dest="output",
                       help="output directory where to dump json files submitted to ingest", metavar="FILE")
-    parser.add_option("-l", "--log", help="the logging level", default='INFO')
-    parser.add_option("-v", "--version", dest="schema_version", help="Metadata schema version", default=None)
-    parser.add_option("-i", "--ingest", help="the URL to the ingest API")
-    parser.add_option("-s", "--staging", help="the URL to the staging API")
-    parser.add_option("-d", "--dss", help="the URL to the datastore service")
+    parser.add_argument("-l", "--log", help="the logging level", default='INFO')
+    parser.add_argument("-v", "--version", dest="schema_version", help="Metadata schema version", default=None)
+    parser.add_argument("-i", "--ingest", help="the URL to the ingest API")
+    parser.add_argument("-s", "--staging", help="the URL to the staging API")
+    parser.add_argument("-d", "--dss", help="the URL to the datastore service")
 
-    (options, args) = parser.parse_args()
+    options = parser.parse_args()
 
     biomaterial_file = None
     file_file = None
@@ -144,34 +170,28 @@ if __name__ == "__main__":
     process_uuids = []
 
     if options.submissionsEnvelopeUuid and not options.processUrl and not options.bundleUuid:
-        ingest_url = INGEST_API.replace('{env}', options.system)
-        api = ingest.api.ingestapi.IngestApi(ingest_url)
 
-        process_uuids = get_all_process_ids(options.submissionsEnvelopeUuid)
+        linked_graph_builder = AdvancedLinksBuilder(options)
+
+        process_uuids = linked_graph_builder.get_all_process_ids(options.submissionsEnvelopeUuid)
+
 
 
     if  options.submissionsEnvelopeUuid and (options.processUrl or len(process_uuids) > 0):
         if options.processUrl and len(process_uuids) == 0:
             process_uuids.append(options.processUrl)
 
-        output_dir = options.output
-        options.ingest = ingest_url
-        ex = ingest.exporter.ingestexportservice.IngestExporter(options)
-        # neo_loader = Neo4jBundleImporter()
+        print("About to deal with " + str(len(process_uuids)) + " processes")
+      # neo_loader = Neo4jBundleImporter()
 
         for process_uuid in process_uuids:
             # dir_name = output_dir + "/" + process_uuid
 
-            linked_graph = gather_process_data(process_uuid)
+            linked_graph = linked_graph_builder.gather_process_data(process_uuid)
 
-            directory = os.path.abspath(output_dir)
+            linked_graph_builder._save_file(process_uuid, linked_graph)
 
-            if not os.path.exists(directory):
-                os.makedirs(directory)
 
-            tmp_file = open(directory + "/" + process_uuid + "_linksGraph.json", "w")
-            tmp_file.write(json.dumps(linked_graph['links'], indent=4))
-            tmp_file.close()
 
             # biomaterials = []
             # files = []

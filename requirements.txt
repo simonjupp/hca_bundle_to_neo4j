@@ -2,3 +2,8 @@ pyparsing==2.2.0
 neo4j-driver
 six==1.11.0
 requests
+networkx
+pandas
+numpy
+matplotlib
+py2neo
