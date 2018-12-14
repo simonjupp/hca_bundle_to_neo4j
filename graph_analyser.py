@@ -28,6 +28,8 @@ if __name__ == "__main__":
     if options.submissionsEnvelopeUuid:
         linked_graph_builder = AdvancedLinksBuilder(options)
 
+        print("Loading processes")
+
         process_uuids = linked_graph_builder.get_all_process_ids(options.submissionsEnvelopeUuid)
 
         print("About to deal with " + str(len(process_uuids)) + " processes")
@@ -37,6 +39,9 @@ if __name__ == "__main__":
             linked_graph = linked_graph_builder.gather_process_data(process_uuid)
 
             linked_graph_builder._save_file(process_uuid, linked_graph)
+
+            if len(process_uuids)%(process_uuids.index(process_uuid)+1) == 0:
+                print(str(((process_uuids.index(process_uuid)+1)/len(process_uuid))*10) + "% done")
 
 
         l = os.listdir(options.output)
