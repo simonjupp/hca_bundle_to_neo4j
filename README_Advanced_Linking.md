@@ -36,7 +36,7 @@ Install the latest version in your graph analyser directory:
 
 This script creates the modified graph linking json identified at the Cambridge Biohackathon. The script doesn't download entire bundles, it just creates the linking. It does so for all the data in a given submission.
 
-Run the following command. `-e` is the submission envelope (Mongo) ID, `-n` specifies the environment (staging, integration or dev) in which to run the script and `-o` is the directly where the linked graph json files will get written. `-p` is a binary flag - if set, graphs will be rendered (NB - may not work at the moment). `-l` sets the layout option for graphs - only use in conjunction with `-p`; default option is 2.
+Run the following command. `-e` is the submission envelope (Mongo) ID, `-n` specifies the environment (staging, integration, dev or prod) in which to run the script and `-o` is the directly where the linked graph json files will get written. `-p` is a binary flag - if set, graphs will be rendered (NB - may not work at the moment). `-l` sets the layout option for graphs - only use in conjunction with `-p`; default option is 2.
 
 
 `./graph_analyser.sh -e 5ba0bd5eb32e850007eb6dd6 -n staging -o output`
